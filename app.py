@@ -28,11 +28,21 @@ def upload_file():
 
 @app.route('/api/env-variable')
 def get_env_variable():
+    node_name = os.getenv('NODE_NAME') or get_node_name()
+
     return jsonify({
         'user': os.environ.get('user'),
         'number': os.environ.get('number'),
+        'NODE_NAME': node_name,
     })
 
+def get_node_name():
+    import subprocess
+    result = subprocess.run(['kubectl', 'get', 'pod', '-o', 'jsonpath={.spec.nodeName}', os.getenv('HOSTNAME')], capture_output=True, text=True)
+    if result.returncode == 0:
+        return result.stdout.strip()
+    else:
+        return 'Unknown node'
 
 if __name__ == '__main__':
     app.run()
